@@ -1223,7 +1223,8 @@ try{
 (function greetName(){
   try{
     var u=TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
-    if(u && u.first_name) el.greet.textContent=greetWord()+" "+u.first_name;
+    var nm=String((u&&u.first_name)||"").replace(/[^\p{L}\p{N} _.\-]/gu,"").trim();
+    if(nm) el.greet.textContent=greetWord()+", "+nm;
   }catch(e){}
 })();
 
