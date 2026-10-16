@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Дневник практики</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500&family=Golos+Text:wght@400;500;600&display=swap">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -25,8 +25,11 @@
   --body:"Golos Text",-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
+html{height:100%; -webkit-text-size-adjust:100%; overscroll-behavior:none;}
 body{
   margin:0;
+  overscroll-behavior:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none; user-select:none;
   background:var(--bg); color:var(--ink);
   font-family:var(--body); font-size:16px; line-height:1.55;
   padding-left:max(16px,env(safe-area-inset-left,0px));
@@ -113,9 +116,11 @@ button:focus-visible, textarea:focus-visible, input:focus-visible{outline:2px so
 .chip{font:inherit; font-size:.84rem; font-weight:500; color:var(--ink); background:rgba(20,24,17,.35); border:1px solid var(--stroke); border-radius:999px; padding:6px 14px; cursor:pointer; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
 .chip[aria-pressed="true"]{background:var(--cream); color:var(--cream-ink); border-color:var(--cream);}
 textarea, input[type="text"]{
-  width:100%; box-sizing:border-box; font:inherit; color:var(--ink);
+  width:100%; box-sizing:border-box; font:inherit; font-size:16px; color:var(--ink);
   background:rgba(0,0,0,.3); border:1px solid var(--stroke); border-radius:15px; padding:12px 14px;
+  -webkit-user-select:text; user-select:text;
 }
+.entry-text{-webkit-user-select:text; user-select:text;}
 textarea{min-height:90px; resize:vertical;}
 textarea.big{min-height:180px;}
 textarea::placeholder, input::placeholder{color:#7d8273;}
@@ -1227,6 +1232,14 @@ try{
     if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();
   }
 }catch(e){}
+/* запрет пинч-зума и двойного тапа (фиксированный экран, как в нативном приложении) */
+document.addEventListener("gesturestart",function(e){ e.preventDefault(); }, {passive:false});
+var lastTouch=0;
+document.addEventListener("touchend",function(e){
+  var now=Date.now();
+  if(now-lastTouch<300 && e.target && !/^(INPUT|TEXTAREA|BUTTON|SELECT|LABEL)$/.test(e.target.tagName)) e.preventDefault();
+  lastTouch=now;
+}, {passive:false});
 (function greetName(){
   try{
     var u=TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
@@ -1260,14 +1273,14 @@ function storeSave(id,obj){
   for(var i=0;i<json.length;i+=CHUNK) parts.push(json.slice(i,i+CHUNK));
   var p=Promise.resolve();
   parts.forEach(function(part,idx){
-    p=p.then(function(){ return csCall(cloud.setItem, id+"."+idx, part); });
+    p=p.then(function(){ return csCall(cloud.setItem, id+"_"+idx, part); });
   });
   return p;
 }
 function storeDelete(id){
   if(!cloud){ var m=lsAll(); delete m[id]; lsWrite(m); return Promise.resolve(); }
   return csCall(cloud.getKeys).then(function(keys){
-    var mine=(keys||[]).filter(function(k){ return k.indexOf(id+".")===0; });
+    var mine=(keys||[]).filter(function(k){ return k.indexOf(id+"_")===0; });
     return mine.length ? csCall(cloud.removeItems, mine) : null;
   });
 }
@@ -1277,7 +1290,7 @@ function storeLoad(){
     return Promise.resolve(Object.keys(m).map(function(id){ var o=m[id]; o.id=id; return o; }));
   }
   return csCall(cloud.getKeys).then(function(keys){
-    keys=(keys||[]).filter(function(k){ return /^e\d/.test(k) && k.lastIndexOf(".")>0; });
+    keys=(keys||[]).filter(function(k){ return /^e\d/.test(k) && k.lastIndexOf("_")>0; });
     if(!keys.length) return [];
     var out={}, batches=[], p=Promise.resolve();
     for(var i=0;i<keys.length;i+=50) batches.push(keys.slice(i,i+50));
@@ -1289,7 +1302,7 @@ function storeLoad(){
     return p.then(function(){
       var byId={};
       Object.keys(out).forEach(function(k){
-        var dot=k.lastIndexOf("."); var id=k.slice(0,dot), idx=+k.slice(dot+1);
+        var dot=k.lastIndexOf("_"); var id=k.slice(0,dot), idx=+k.slice(dot+1);
         (byId[id]=byId[id]||[])[idx]=out[k];
       });
       return Object.keys(byId).map(function(id){
