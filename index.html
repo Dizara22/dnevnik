@@ -38,7 +38,7 @@ body{
 }
 body::before{
   content:""; position:fixed; left:0; top:0; width:100%;
-  height:100vh; height:100lvh; /* стабильная высота: не прыгает при клавиатуре */
+  height:100vh; height:100lvh; height:var(--bgh, 100lvh); /* высота прибивается JS и только растёт */
   z-index:-1;
   transform:translateZ(0);
   background:
@@ -556,6 +556,16 @@ try{
 }catch(e){}
 /* фиксированный экран: запрет пинч-зума (двойной тап гасится через touch-action:manipulation) */
 document.addEventListener("gesturestart",function(e){ e.preventDefault(); }, {passive:false});
+/* фон: прибить высоту в пикселях; только растёт — клавиатура не меняет масштаб картинки */
+var __bgh=0;
+function pinBg(){
+  var h=Math.round(Math.max(window.innerHeight||0, (TG&&TG.viewportStableHeight)||0, document.documentElement.clientHeight||0));
+  if(h>__bgh){ __bgh=h; document.documentElement.style.setProperty("--bgh", __bgh+"px"); }
+}
+pinBg();
+try{ if(TG&&TG.onEvent) TG.onEvent("viewportChanged",pinBg); }catch(e){}
+window.addEventListener("resize",pinBg);
+window.addEventListener("orientationchange",function(){ __bgh=0; setTimeout(pinBg,350); });
 /* тап вне поля ввода: снять фокус -> клавиатура закрывается, экран не дёргается */
 document.addEventListener("touchstart",function(e){
   var ae=document.activeElement;
