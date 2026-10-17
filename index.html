@@ -556,6 +556,14 @@ try{
 }catch(e){}
 /* фиксированный экран: запрет пинч-зума (двойной тап гасится через touch-action:manipulation) */
 document.addEventListener("gesturestart",function(e){ e.preventDefault(); }, {passive:false});
+/* тап вне поля ввода: снять фокус -> клавиатура закрывается, экран не дёргается */
+document.addEventListener("touchstart",function(e){
+  var ae=document.activeElement;
+  if(ae && (ae.tagName==="INPUT"||ae.tagName==="TEXTAREA")){
+    var t=e.target;
+    if(t!==ae && t.tagName!=="INPUT" && t.tagName!=="TEXTAREA") ae.blur();
+  }
+},{passive:true});
 (function greetName(){
   try{
     var u=TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
