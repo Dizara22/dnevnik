@@ -574,13 +574,7 @@ document.addEventListener("touchstart",function(e){
     if(t!==ae && t.tagName!=="INPUT" && t.tagName!=="TEXTAREA") ae.blur();
   }
 },{passive:true});
-/* при фокусе поля: плавно отцентрировать его над клавиатурой вместо резкого прыжка */
-document.addEventListener("focusin",function(e){
-  var t=e.target;
-  if(t && (t.tagName==="TEXTAREA"||t.tagName==="INPUT")){
-    setTimeout(function(){ try{ t.scrollIntoView({block:"center",behavior:"smooth"}); }catch(err){} },350);
-  }
-});
+
 (function greetName(){
   try{
     var u=TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
@@ -673,6 +667,7 @@ function cfgSave(){
 var VIEWS=["onboard","journal","practices","sos","runner","done"];
 function setView(v){
   stopTimer();
+  try{ var ae=document.activeElement; if(ae&&ae.blur&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA")) ae.blur(); }catch(e){}
   state.view=v;
   VIEWS.forEach(function(name){
     var node=el["view_"+name];
