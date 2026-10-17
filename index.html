@@ -28,6 +28,7 @@
 html{height:100%; -webkit-text-size-adjust:100%; overscroll-behavior:none;}
 body{
   margin:0;
+  position:fixed; inset:0; overflow:hidden;
   overscroll-behavior:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
   -webkit-user-select:none; user-select:none;
   background:var(--bg); color:var(--ink);
@@ -52,6 +53,10 @@ body::after{
   content:""; position:fixed; left:0; right:0; top:0; z-index:6; pointer-events:none; transform:translateZ(0);
   height:calc(var(--tg-content-safe-area-inset-top, 0px) + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + 54px);
   background:linear-gradient(rgba(18,22,15,.9), rgba(18,22,15,.55) 55%, rgba(18,22,15,0));
+}
+#scroller{
+  position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
 }
 .wrap{
   max-width:480px; margin:0 auto;
@@ -225,6 +230,7 @@ details.why p{margin:8px 0 0;}
 </style>
 </head>
 <body>
+<div id="scroller">
 <div class="wrap">
   <header>
     <div class="toprow">
@@ -351,6 +357,7 @@ details.why p{margin:8px 0 0;}
       </div>
     </section>
   </div>
+</div>
 </div>
 
 <script>
@@ -510,6 +517,8 @@ var OB_STEPS = [
 ];
 
 /* ---------- состояние ---------- */
+var SCROLLER=null;
+function toTop(){ try{ (SCROLLER||window).scrollTo(0,0); }catch(e){} }
 var state = { db:null, entries:[], armedDel:null, mood:null, view:"journal", run:null,
               feedGroup:"Все", feedMood:null, bannerHidden:false };
 var cfg = { onboarded:0, focus:null };
@@ -526,6 +535,7 @@ var el = {};
  "view-runner","runner-arrow","runner-title","runner-step","runner-body","runner-back","runner-next","runner-notice",
  "view-done","done-streak","done-delta","done-more","done-close"
 ].forEach(function(id){ el[id.replace(/-/g,"_")] = document.getElementById(id); });
+SCROLLER=document.getElementById("scroller");
 
 /* ---------- даты и приветствие ---------- */
 function localDay(d){
@@ -718,7 +728,7 @@ el.ob_next.addEventListener("click",function(){
   if(obStep<OB_STEPS.length-1){ obStep++; renderOnboard(); return; }
   cfg.onboarded=1; cfg.focus=obFocus; cfgSave();
   setView("journal"); renderHero();
-  window.scrollTo(0,0);
+  toTop();
 });
 
 /* ---------- SOS ---------- */
@@ -729,7 +739,7 @@ SOS_OPTIONS.forEach(function(o){
   b.addEventListener("click",function(){ startPractice(o[0],"sos"); });
   el.sos_grid.appendChild(b);
 });
-el.sos_open.addEventListener("click",function(){ setView("sos"); window.scrollTo(0,0); });
+el.sos_open.addEventListener("click",function(){ setView("sos"); toTop(); });
 el.sos_back.addEventListener("click",function(){ setView("journal"); });
 
 /* ---------- рекомендация сейчас ---------- */
@@ -1467,7 +1477,7 @@ function startPractice(id, from){
   state.run={id:id, step:0, data:{}, from:from||state.view};
   setView("runner");
   renderRunner();
-  window.scrollTo(0,0);
+  toTop();
 }
 function renderRunner(){
   stopTimer();
@@ -1530,10 +1540,10 @@ function showDone(doc){
   else if(doc.mood && MOOD_BY_ID[doc.mood]) t="Состояние: "+MOOD_BY_ID[doc.mood].label;
   el.done_delta.hidden=!t; el.done_delta.textContent=t;
   setView("done");
-  window.scrollTo(0,0);
+  toTop();
 }
-el.done_close.addEventListener("click",function(){ setView("journal"); window.scrollTo(0,0); });
-el.done_more.addEventListener("click",function(){ setView("practices"); window.scrollTo(0,0); });
+el.done_close.addEventListener("click",function(){ setView("journal"); toTop(); });
+el.done_more.addEventListener("click",function(){ setView("practices"); toTop(); });
 
 /* ---------- фильтры ленты ---------- */
 var FEED_GROUPS=["Все","Состояние","Мышление","Цели и деньги","Самореализация","Свободное"];
@@ -1731,7 +1741,7 @@ el.export_btn.addEventListener("click",function(){
 refresh();
 cfgLoad(function(){
   renderHero();
-  if(!cfg.onboarded){ obStep=0; obFocus=cfg.focus||null; setView("onboard"); renderOnboard(); window.scrollTo(0,0); }
+  if(!cfg.onboarded){ obStep=0; obFocus=cfg.focus||null; setView("onboard"); renderOnboard(); toTop(); }
 });
 })();
 </script>
