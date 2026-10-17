@@ -564,6 +564,13 @@ document.addEventListener("touchstart",function(e){
     if(t!==ae && t.tagName!=="INPUT" && t.tagName!=="TEXTAREA") ae.blur();
   }
 },{passive:true});
+/* при фокусе поля: плавно отцентрировать его над клавиатурой вместо резкого прыжка */
+document.addEventListener("focusin",function(e){
+  var t=e.target;
+  if(t && (t.tagName==="TEXTAREA"||t.tagName==="INPUT")){
+    setTimeout(function(){ try{ t.scrollIntoView({block:"center",behavior:"smooth"}); }catch(err){} },350);
+  }
+});
 (function greetName(){
   try{
     var u=TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
